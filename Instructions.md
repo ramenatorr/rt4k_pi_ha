@@ -26,6 +26,15 @@ docker run --rm -v "$(pwd):/src" -w /src mcr.microsoft.com/dotnet/sdk:9.0
 
 This is slower since it installs dependencies every time, but works without creating files.
 
+## Tweaking Rasperry Pi 0W2
+
+Had to fix an issue with WiFi not working after a power cycle. Ended up doing the following:
+
+- connect via HDMI and wireless mouse/keyboard via USB OTG
+- after boot, login with pi/pi
+- sudo nmtui
+- add a new connection...enter SSID, password, etc.
+
 ## Deploy binary to Pi
 
 Copy the binary to the Pi using SCP:
@@ -152,17 +161,58 @@ aux8	BUTTON AUX8
 Power on command while sleeping. All other commands do nothing (no "remote" prefix)
 pwr on	TURNS RT4K ON IF IT IS OFF
 
+### API commands for RT4K_PI
+
+API Parameter	Serial Command
+Resolution4K	res4k
+Resolution1080p	res1080p
+Resolution1440p	res1440p
+Resolution480p	res480p
+ResolutionUser1	res1
+ResolutionUser2	res2
+ResolutionUser3	res3
+ResolutionUser4	res4
+
+e.g. http://rt4k.local/RemoteCommand/ResolutionUser1
 
 ## Home Assistant
+
+### Initial Config
+
+1. Add sensor and rest command
+2. add a script to automate the confirm res change (right + OK)
 
 edit our config/confiuration.yml file to include the following:
 
 ```
+sensor:
+  - platform: rest
+    name: RT4K Power State
+    resource: http://rt4k.local/PowerState
+    scan_interval: 10
+
 rest_command:
   rt4k_command:
     url: "http://rt4k.local/RemoteCommand/{{ command }}"
     method: POST
-  # res1080p:
-  #   url: "http://rt4k.local/RemoteCommand/res1080p"
-  #   method: POST
 ```
+Edit config/scripts.yml with the following:
+
+```
+rt4k_confirm_resolution_change:
+  alias: RT4K Confirm Resolution Change
+  description: ''
+  sequence:
+  - data:
+      command: right
+    action: rest_command.rt4k_command
+  - delay:
+      milliseconds: 300
+  - data:
+      command: ok
+    action: rest_command.rt4k_command
+```
+
+### Dashboard
+
+Create a dashboard as required...
