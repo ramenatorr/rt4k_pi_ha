@@ -71,6 +71,7 @@ public partial class Program
         // APIs
         app.MapGet("/GetUpdateStatus", () => Installer.GetStatus());
         app.MapGet("/CheckUpdates", () => Installer.CheckUpdate());
+        app.MapGet("/PowerState", () => RT4K?.Power.ToString() ?? "Unknown");
 
         // Commands
         app.MapGet("/SendSerial", ([FromQuery] string cmd) => Serial?.WriteLine(cmd));
